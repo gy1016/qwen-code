@@ -5,19 +5,33 @@
  */
 
 import { useEffect, useState } from 'react';
-import { appEvents } from './../../utils/events.js';
-import { Box, Text } from 'ink';
-import { useConfig } from '../contexts/ConfigContext.js';
+import { appEvents } from '../../utils/events.js';
 import { type McpClient, MCPServerStatus } from '@qwen-code/qwen-code-core';
-import { GeminiSpinner } from './GeminiRespondingSpinner.js';
-import { theme } from '../semantic-colors.js';
 import { t } from '../../i18n/index.js';
 
-export const ConfigInitDisplay = () => {
-  const config = useConfig();
-  const [message, setMessage] = useState(t('Initializing...'));
+/**
+ * Returns a human-readable initialization status message while config is
+ * being initialized (MCP servers connecting, etc.).  Returns `null` once
+ * initialization is complete.
+ *
+ * This hook listens to the same `mcp-client-update` events that
+ * `ConfigInitDisplay` used to, but produces a plain string so the caller
+ * can render it inline — e.g. inside the Footer — without adding extra
+ * terminal rows.
+ */
+export function useConfigInitMessage(
+  isConfigInitialized: boolean,
+): string | null {
+  const [message, setMessage] = useState<string | null>(
+    isConfigInitialized ? null : t('Initializing...'),
+  );
 
   useEffect(() => {
+    if (isConfigInitialized) {
+      setMessage(null);
+      return;
+    }
+
     const onChange = (clients?: Map<string, McpClient>) => {
       if (!clients || clients.size === 0) {
         setMessage(t('Initializing...'));
@@ -41,13 +55,7 @@ export const ConfigInitDisplay = () => {
     return () => {
       appEvents.off('mcp-client-update', onChange);
     };
-  }, [config]);
+  }, [isConfigInitialized]);
 
-  return (
-    <Box marginTop={1}>
-      <Text>
-        <GeminiSpinner /> <Text color={theme.text.primary}>{message}</Text>
-      </Text>
-    </Box>
-  );
-};
+  return message;
+}

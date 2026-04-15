@@ -14,11 +14,13 @@ import { ShellModeIndicator } from './ShellModeIndicator.js';
 import { isNarrowWidth } from '../utils/isNarrowWidth.js';
 
 import { useStatusLine } from '../hooks/useStatusLine.js';
+import { useConfigInitMessage } from '../hooks/useConfigInitMessage.js';
 import { useUIState } from '../contexts/UIStateContext.js';
 import { useConfig } from '../contexts/ConfigContext.js';
 import { useVimMode } from '../contexts/VimModeContext.js';
 import { useCompactMode } from '../contexts/CompactModeContext.js';
 import { ApprovalMode } from '@qwen-code/qwen-code-core';
+import { GeminiSpinner } from './GeminiRespondingSpinner.js';
 import { t } from '../../i18n/index.js';
 
 export const Footer: React.FC = () => {
@@ -27,6 +29,7 @@ export const Footer: React.FC = () => {
   const { vimEnabled, vimMode } = useVimMode();
   const { text: statusLineText } = useStatusLine();
   const { compactMode } = useCompactMode();
+  const configInitMessage = useConfigInitMessage(uiState.isConfigInitialized);
 
   const { promptTokenCount, showAutoAcceptIndicator } = {
     promptTokenCount: uiState.sessionStats.lastPromptTokenCount,
@@ -70,6 +73,10 @@ export const Footer: React.FC = () => {
   ) : showAutoAcceptIndicator !== undefined &&
     showAutoAcceptIndicator !== ApprovalMode.DEFAULT ? (
     <AutoAcceptIndicator approvalMode={showAutoAcceptIndicator} />
+  ) : configInitMessage ? (
+    <Text color={theme.text.secondary}>
+      <GeminiSpinner /> {configInitMessage}
+    </Text>
   ) : suppressHint ? null : (
     <Text color={theme.text.secondary}>{t('? for shortcuts')}</Text>
   );
